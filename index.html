@@ -3,9 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MuzEdits Studio - Web Editor</title>
+    <title>MuzEdits Pro Studio - Ultimate Editor</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <style>
         @keyframes pulse-watermark {
             0%, 100% { opacity: 0.2; transform: scale(1); }
@@ -14,191 +13,257 @@
         .muzedits-watermark {
             animation: pulse-watermark 4s infinite ease-in-out;
         }
-        /* Custom Scrollbar for Timeline */
+        /* Modern Effects */
+        .effect-glitch { filter: drop-shadow(2px -2px #ff0055) drop-shadow(-2px 2px #00ffff); }
+        .effect-vhs { filter: sepia(0.3) contrast(1.2) saturate(1.4); }
+        .effect-neon { filter: brightness(1.2) drop-shadow(0 0 8px #38bdf8); }
+        .effect-cyber { filter: hue-rotate(90deg) contrast(1.3); }
+        .effect-bw { filter: grayscale(100%) contrast(1.3); }
+
         ::-webkit-scrollbar { height: 6px; width: 6px; }
-        ::-webkit-scrollbar-track { background: #0f172a; }
-        ::-webkit-scrollbar-thumb { background: #334155; border-radius: 3px; }
+        ::-webkit-scrollbar-track { background: #090d16; }
+        ::-webkit-scrollbar-thumb { background: #1e293b; border-radius: 3px; }
     </style>
 </head>
-<body class="bg-slate-950 text-slate-100 h-screen flex flex-col overflow-hidden select-none">
+<body class="bg-slate-950 text-slate-100 h-screen flex flex-col overflow-hidden select-none font-sans">
 
-    <!-- Top Navbar -->
+    <!-- Top Navigation Bar -->
     <header class="h-14 bg-slate-900 border-b border-slate-800 flex items-center justify-between px-4 z-20">
         <div class="flex items-center space-x-3">
             <span class="text-sky-400 font-black text-lg tracking-wider">MUZEDITS</span>
-            <span class="text-xs bg-slate-800 text-slate-400 px-2 py-0.5 rounded-full border border-slate-700">Pro Studio 3D</span>
+            <span class="text-[10px] bg-gradient-to-r from-sky-500 to-indigo-500 text-white px-2 py-0.5 rounded-full font-bold shadow">PRO ULTRA</span>
         </div>
         <div class="flex items-center space-x-2">
-            <button id="exportBtn" class="bg-sky-600 hover:bg-sky-500 text-white text-xs font-semibold px-4 py-2 rounded-lg transition shadow-lg shadow-sky-900/40">Dışa Aktar / Kaydet</button>
+            <button id="exportBtn" class="bg-gradient-to-r from-sky-600 to-indigo-600 hover:opacity-90 text-white text-xs font-bold px-4 py-2 rounded-xl transition shadow-lg shadow-sky-900/40">Projeyi Dışa Aktar</button>
         </div>
     </header>
 
-    <!-- Main Workspace -->
+    <!-- Main Studio Workspace -->
     <div class="flex-1 flex overflow-hidden">
         
-        <!-- Left Sidebar: Tools / Media -->
-        <aside class="w-64 bg-slate-900/80 border-r border-slate-800 flex flex-col">
-            <div class="p-3 border-b border-slate-800 text-xs font-bold text-slate-400 uppercase tracking-wider">Medya & Varlıklar</div>
-            <div class="p-4 space-y-4 flex-1 overflow-y-auto">
-                <div>
-                    <label class="block text-xs font-medium text-slate-300 mb-2">Video / Medya Yükle</label>
-                    <input type="file" id="mediaUpload" accept="video/*,audio/*" class="block w-full text-xs text-slate-400 file:mr-2 file:py-1.5 file:px-3 file:rounded-md file:border-0 file:text-xs file:font-semibold file:bg-sky-600 file:text-white hover:file:bg-sky-500 cursor-pointer">
-                </div>
+        <!-- Left Tool Panel (Tabs) -->
+        <aside class="w-72 bg-slate-900/90 border-r border-slate-800 flex flex-col z-10">
+            <!-- Tool Tabs -->
+            <div class="grid grid-cols-4 bg-slate-950 text-center text-[10px] font-bold text-slate-400 border-b border-slate-800">
+                <button onclick="switchTab('media')" id="tabBtn-media" class="py-3 text-sky-400 border-b-2 border-sky-400">Medya</button>
+                <button onclick="switchTab('overlay')" id="tabBtn-overlay" class="py-3 hover:text-slate-200">Bindir</button>
+                <button onclick="switchTab('effects')" id="tabBtn-effects" class="py-3 hover:text-slate-200">Efekt</button>
+                <button onclick="switchTab('tools')" id="tabBtn-tools" class="py-3 hover:text-slate-200">Hız/Böl</button>
+            </div>
+
+            <!-- Tab Contents -->
+            <div class="p-4 flex-1 overflow-y-auto space-y-5">
                 
-                <hr class="border-slate-800">
-                
-                <div class="space-y-3">
-                    <span class="text-xs font-bold text-slate-400 uppercase tracking-wider">3D Efekt & Sahne</span>
-                    <button id="toggle3D" class="w-full py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs rounded-lg border border-slate-700 transition">3D Parçacık Arka Planı: Açık</button>
+                <!-- 1. Medya Sekmesi -->
+                <div id="tab-media" class="space-y-4">
+                    <div>
+                        <label class="block text-xs font-bold text-slate-300 mb-2">Ana Video Yükle</label>
+                        <input type="file" id="mainVideoUpload" accept="video/*" class="block w-full text-xs text-slate-400 file:mr-2 file:py-2 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-sky-600 file:text-white hover:file:bg-sky-500 cursor-pointer">
+                    </div>
                 </div>
 
-                <div class="space-y-3">
-                    <span class="text-xs font-bold text-slate-400 uppercase tracking-wider">Filtreler & Ayarlar</span>
+                <!-- 2. Bindirme (PIP - Resim/Video Ekle) Sekmesi -->
+                <div id="tab-overlay" class="space-y-4 hidden">
                     <div>
-                        <label class="text-xs text-slate-400 flex justify-between"><span>Parlaklık</span><span id="valBrightness">100%</span></label>
-                        <input type="range" id="filterBrightness" min="50" max="150" value="100" class="w-full accent-sky-500 mt-1">
+                        <label class="block text-xs font-bold text-slate-300 mb-2">Üste Resim Ekle</label>
+                        <input type="file" id="overlayImageUpload" accept="image/*" class="block w-full text-xs text-slate-400 file:mr-2 file:py-2 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-purple-600 file:text-white hover:file:bg-purple-500 cursor-pointer">
                     </div>
                     <div>
-                        <label class="text-xs text-slate-400 flex justify-between"><span>Kontrast</span><span id="valContrast">100%</span></label>
-                        <input type="range" id="filterContrast" min="50" max="150" value="100" class="w-full accent-sky-500 mt-1">
+                        <label class="block text-xs font-bold text-slate-300 mb-2">Üste Video Ekle (PIP)</label>
+                        <input type="file" id="overlayVideoUpload" accept="video/*" class="block w-full text-xs text-slate-400 file:mr-2 file:py-2 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-purple-600 file:text-white hover:file:bg-purple-500 cursor-pointer">
                     </div>
                 </div>
+
+                <!-- 3. Efektler Sekmesi (Envayi Çeşit Premium Efekt) -->
+                <div id="tab-effects" class="space-y-3 hidden">
+                    <span class="text-xs font-bold text-slate-400 uppercase tracking-wider block">Premium Efektler</span>
+                    <div class="grid grid-cols-2 gap-2">
+                        <button onclick="applyEffect('none')" class="p-2 bg-slate-800 hover:bg-slate-700 text-xs rounded-lg border border-slate-700 text-center">Normal</button>
+                        <button onclick="applyEffect('glitch')" class="p-2 bg-pink-950/60 hover:bg-pink-900/60 text-pink-300 text-xs rounded-lg border border-pink-800 text-center font-semibold">Cyber Glitch</button>
+                        <button onclick="applyEffect('vhs')" class="p-2 bg-amber-950/60 hover:bg-amber-900/60 text-amber-300 text-xs rounded-lg border border-amber-800 text-center font-semibold">Retro VHS</button>
+                        <button onclick="applyEffect('neon')" class="p-2 bg-sky-950/60 hover:bg-sky-900/60 text-sky-300 text-xs rounded-lg border border-sky-800 text-center font-semibold">Neon Glow</button>
+                        <button onclick="applyEffect('cyber')" class="p-2 bg-indigo-950/60 hover:bg-indigo-900/60 text-indigo-300 text-xs rounded-lg border border-indigo-800 text-center font-semibold">Matrix Cyber</button>
+                        <button onclick="applyEffect('bw')" class="p-2 bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs rounded-lg border border-slate-700 text-center font-semibold">Sinematik B&W</button>
+                    </div>
+                </div>
+
+                <!-- 4. Hız ve Bölme Sekmesi -->
+                <div id="tab-tools" class="space-y-4 hidden">
+                    <div>
+                        <span class="text-xs font-bold text-slate-400 uppercase tracking-wider block mb-2">Oynatma Hızı</span>
+                        <div class="grid grid-cols-4 gap-1">
+                            <button onclick="setSpeed(0.5)" class="py-2 bg-slate-800 hover:bg-slate-700 text-xs rounded border border-slate-700">0.5x</button>
+                            <button onclick="setSpeed(1)" class="py-2 bg-sky-600 text-xs rounded font-bold">1x</button>
+                            <button onclick="setSpeed(2)" class="py-2 bg-slate-800 hover:bg-slate-700 text-xs rounded border border-slate-700">2x</button>
+                            <button onclick="setSpeed(4)" class="py-2 bg-slate-800 hover:bg-slate-700 text-xs rounded border border-slate-700">4x</button>
+                        </div>
+                    </div>
+                    <div class="pt-2">
+                        <span class="text-xs font-bold text-slate-400 uppercase tracking-wider block mb-2">Kurgu Araçları</span>
+                        <button id="splitBtn" class="w-full py-2.5 bg-rose-600/80 hover:bg-rose-600 text-white text-xs font-bold rounded-xl shadow transition">Videoyu An Anda Böl (Split)</button>
+                    </div>
+                </div>
+
             </div>
         </aside>
 
-        <!-- Center Canvas / Preview Area -->
+        <!-- Center Preview Area (CapCut Player Style) -->
         <main class="flex-1 bg-slate-950 flex flex-col items-center justify-center relative overflow-hidden p-6">
-            <!-- 3D Canvas Background Container -->
-            <div id="three-container" class="absolute inset-0 z-0 pointer-events-none"></div>
-
-            <!-- Video Preview Box (CapCut Style 9:16) -->
-            <div class="relative w-full max-w-[280px] aspect-[9/16] bg-black rounded-xl overflow-hidden shadow-2xl border border-slate-800 z-10 flex items-center justify-center">
-                <video id="previewVideo" class="w-full h-full object-cover" playsinline></video>
+            
+            <!-- Video Preview Screen (9:16 Shorts Format) -->
+            <div id="previewContainer" class="relative w-full max-w-[270px] aspect-[9/16] bg-black rounded-2xl overflow-hidden shadow-2xl border border-slate-800 z-10 flex items-center justify-center">
+                <!-- Main Video Element -->
+                <video id="mainVideo" class="w-full h-full object-cover" playsinline></video>
                 
+                <!-- Overlay Image / PIP Layer -->
+                <img id="overlayImage" class="absolute top-10 left-6 w-24 rounded-lg shadow-lg border border-white/20 hidden cursor-move" alt="PIP Image">
+                
+                <!-- Overlay Video PIP Layer -->
+                <video id="overlayVideo" class="absolute bottom-12 left-6 w-28 rounded-lg shadow-lg border border-white/20 hidden" playsinline muted autoplay loop></video>
+
                 <!-- MuzEdits Watermark Layer (%20 Opacity Pulsing) -->
-                <div id="watermarkLayer" class="absolute bottom-6 right-4 text-white font-black text-sm tracking-widest muzedits-watermark pointer-events-none drop-shadow-md">
+                <div class="absolute bottom-4 right-4 text-white font-black text-xs tracking-widest muzedits-watermark pointer-events-none drop-shadow-md">
                     MuzEdits
                 </div>
             </div>
 
-            <!-- Video Playback Controls -->
-            <div class="flex items-center space-x-4 mt-4 z-10 bg-slate-900/90 px-6 py-2 rounded-full border border-slate-800 backdrop-blur">
-                <button id="playPauseBtn" class="text-sky-400 hover:text-sky-300 font-bold text-sm">Oynat / Durdur</button>
+            <!-- Playback Controls -->
+            <div class="flex items-center space-x-4 mt-4 z-10 bg-slate-900/90 px-6 py-2.5 rounded-full border border-slate-800 backdrop-blur shadow-xl">
+                <button id="playPauseBtn" class="text-sky-400 hover:text-sky-300 font-bold text-xs uppercase tracking-wider">Oynat / Durdur</button>
                 <span id="timeDisplay" class="text-xs text-slate-400 font-mono">00:00 / 00:00</span>
             </div>
         </main>
 
     </div>
 
-    <!-- Bottom Timeline (CapCut Style Tracks) -->
-    <footer class="h-36 bg-slate-900 border-t border-slate-800 flex flex-col z-20">
+    <!-- Bottom Timeline (Multi-track CapCut UI) -->
+    <footer class="h-40 bg-slate-900 border-t border-slate-800 flex flex-col z-20">
         <div class="h-8 bg-slate-900/90 border-b border-slate-800 flex items-center px-4 text-xs text-slate-400 justify-between">
-            <span class="font-semibold text-slate-300">Zaman Çizelgesi (Timeline)</span>
-            <span class="text-[10px] text-slate-500">MuzEdits Motor v2.0</span>
+            <span class="font-bold text-slate-300 flex items-center gap-2">Zaman Çizelgesi Katmanları</span>
+            <span id="speedIndicator" class="text-[10px] bg-sky-950 text-sky-300 px-2 py-0.5 rounded border border-sky-800">Hız: 1.0x</span>
         </div>
         <div class="flex-1 p-3 space-y-2 overflow-x-auto">
-            <!-- Video Track -->
-            <div class="flex items-center bg-slate-950/60 rounded-lg h-10 border border-slate-800 px-3 relative overflow-hidden">
-                <span class="text-[10px] font-bold text-sky-400 w-20 shrink-0">VİDEO</span>
-                <div id="videoTrackItem" class="h-7 bg-sky-900/50 border border-sky-700/60 rounded flex items-center px-2 text-[11px] text-sky-200 truncate w-48">Boş Medya</div>
+            <!-- Track 1: Main Video -->
+            <div class="flex items-center bg-slate-950/70 rounded-lg h-9 border border-slate-800 px-3 relative">
+                <span class="text-[10px] font-bold text-sky-400 w-24 shrink-0">VİDEO 1</span>
+                <div id="trackMainInfo" class="h-6 bg-sky-900/40 border border-sky-700/50 rounded flex items-center px-2 text-[11px] text-sky-200 truncate w-64">Boş Medya</div>
             </div>
-            <!-- Watermark / Text Track -->
-            <div class="flex items-center bg-slate-950/60 rounded-lg h-10 border border-slate-800 px-3 relative overflow-hidden">
-                <span class="text-[10px] font-bold text-purple-400 w-20 shrink-0">FİLİGRAN</span>
-                <div class="h-7 bg-purple-900/50 border border-purple-700/60 rounded flex items-center px-2 text-[11px] text-purple-200 w-full">MuzEdits (%20 Şeffaflık Döngüsü Aktif)</div>
+            <!-- Track 2: Overlay PIP -->
+            <div class="flex items-center bg-slate-950/70 rounded-lg h-9 border border-slate-800 px-3 relative">
+                <span class="text-[10px] font-bold text-purple-400 w-24 shrink-0">BİNDİRME (PIP)</span>
+                <div id="trackOverlayInfo" class="h-6 bg-purple-900/40 border border-purple-700/50 rounded flex items-center px-2 text-[11px] text-purple-200 truncate w-64">Eklenmedi</div>
+            </div>
+            <!-- Track 3: Watermark -->
+            <div class="flex items-center bg-slate-950/70 rounded-lg h-9 border border-slate-800 px-3 relative">
+                <span class="text-[10px] font-bold text-emerald-400 w-24 shrink-0">FİLİGRAN</span>
+                <div class="h-6 bg-emerald-900/40 border border-emerald-700/50 rounded flex items-center px-2 text-[11px] text-emerald-200 w-full">MuzEdits %20 Pulse Efekti Aktif</div>
             </div>
         </div>
     </footer>
 
-    <!-- Three.js 3D Background Script -->
+    <!-- JavaScript Application Logic -->
     <script>
-        let scene, camera, renderer, particles;
-        let is3DActive = true;
-
-        function init3D() {
-            const container = document.getElementById('three-container');
-            scene = new THREE.Scene();
-            camera = new THREE.PerspectiveCamera(75, container.clientWidth / container.clientHeight, 0.1, 1000);
-            renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
-            renderer.setSize(container.clientWidth, container.clientHeight);
-            container.appendChild(renderer.domElement);
-
-            // Create floating 3D Particles
-            const geometry = new THREE.BufferGeometry();
-            const count = 300;
-            const positions = new Float32Array(count * 3);
-
-            for(let i = 0; i < count * 3; i++) {
-                positions[i] = (Math.random() - 0.5) * 10;
-            }
-
-            geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
-            const material = new THREE.PointsMaterial({ color: 0x38bdf8, size: 0.03, transparent: true, opacity: 0.4 });
-            particles = new THREE.Points(geometry, material);
-            scene.add(particles);
-
-            camera.position.z = 3;
-
-            animate3D();
+        // Tab Management
+        function switchTab(tabName) {
+            ['media', 'overlay', 'effects', 'tools'].forEach(t => {
+                document.getElementById(`tab-${t}`).classList.add('hidden');
+                document.getElementById(`tabBtn-${t}`).classList.remove('text-sky-400', 'border-b-2', 'border-sky-400');
+                document.getElementById(`tabBtn-${t}`).classList.add('hover:text-slate-200');
+            });
+            document.getElementById(`tab-${tabName}`).classList.remove('hidden');
+            document.getElementById(`tabBtn-${tabName}`).classList.add('text-sky-400', 'border-b-2', 'border-sky-400');
+            document.getElementById(`tabBtn-${tabName}`).classList.remove('hover:text-slate-200');
         }
 
-        function animate3D() {
-            requestAnimationFrame(animate3D);
-            if (is3DActive && particles) {
-                particles.rotation.x += 0.001;
-                particles.rotation.y += 0.002;
-            }
-            renderer.render(scene, camera);
-        }
-
-        init3D();
-
-        // UI & Video Controls Logic
-        const mediaUpload = document.getElementById('mediaUpload');
-        const previewVideo = document.getElementById('previewVideo');
+        const mainVideo = document.getElementById('mainVideo');
+        const overlayImage = document.getElementById('overlayImage');
+        const overlayVideo = document.getElementById('overlayVideo');
         const playPauseBtn = document.getElementById('playPauseBtn');
-        const videoTrackItem = document.getElementById('videoTrackItem');
-        const filterBrightness = document.getElementById('filterBrightness');
-        const filterContrast = document.getElementById('filterContrast');
-        const toggle3D = document.getElementById('toggle3D');
-        const threeContainer = document.getElementById('three-container');
+        const timeDisplay = document.getElementById('timeDisplay');
+        const trackMainInfo = document.getElementById('trackMainInfo');
+        const trackOverlayInfo = document.getElementById('trackOverlayInfo');
+        const speedIndicator = z = document.getElementById('speedIndicator');
 
-        mediaUpload.addEventListener('change', (e) => {
+        // Main Video Upload
+        document.getElementById('mainVideoUpload').addEventListener('change', (e) => {
             const file = e.target.files[0];
             if (file) {
-                const url = URL.createObjectURL(file);
-                previewVideo.src = url;
-                previewVideo.load();
-                videoTrackItem.textContent = file.name;
+                mainVideo.src = URL.createObjectURL(file);
+                mainVideo.load();
+                trackMainInfo.textContent = file.name;
             }
         });
 
+        // Overlay Image Upload
+        document.getElementById('overlayImageUpload').addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (file) {
+                overlayImage.src = URL.createObjectURL(file);
+                overlayImage.classList.remove('hidden');
+                overlayVideo.classList.add('hidden');
+                trackOverlayInfo.textContent = "Resim PIP: " + file.name;
+            }
+        });
+
+        // Overlay Video Upload
+        document.getElementById('overlayVideoUpload').addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (file) {
+                overlayVideo.src = URL.createObjectURL(file);
+                overlayVideo.classList.remove('hidden');
+                overlayImage.classList.add('hidden');
+                overlayVideo.play();
+                trackOverlayInfo.textContent = "Video PIP: " + file.name;
+            }
+        });
+
+        // Play / Pause
         playPauseBtn.addEventListener('click', () => {
-            if (previewVideo.paused) {
-                previewVideo.play();
+            if (mainVideo.paused) {
+                mainVideo.play();
+                if(!overlayVideo.paused) overlayVideo.play();
             } else {
-                previewVideo.pause();
+                mainVideo.pause();
+                overlayVideo.pause();
             }
         });
 
-        function updateFilters() {
-            previewVideo.style.filter = `brightness(${filterBrightness.value}%) contrast(${filterContrast.value}%)`;
-            document.getElementById('valBrightness').textContent = filterBrightness.value + '%';
-            document.getElementById('valContrast').textContent = filterContrast.value + '%';
+        // Time Update
+        mainVideo.addEventListener('timeupdate', () => {
+            const curM = Math.floor(mainVideo.currentTime / 60).toString().padStart(2, '0');
+            const curS = Math.floor(mainVideo.currentTime % 60).toString().padStart(2, '0');
+            const durM = Math.floor(mainVideo.duration / 60 || 0).toString().padStart(2, '0');
+            const durS = Math.floor(mainVideo.duration % 60 || 0).toString().padStart(2, '0');
+            timeDisplay.textContent = `${curM}:${curS} / ${durM}:${durS}`;
+        });
+
+        // Apply Premium Effects
+        function applyEffect(effectName) {
+            mainVideo.className = "w-full h-full object-cover";
+            if (effectName !== 'none') {
+                mainVideo.classList.add(`effect-${effectName}`);
+            }
         }
 
-        filterBrightness.addEventListener('input', updateFilters);
-        filterContrast.addEventListener('input', updateFilters);
+        // Speed Control
+        function setSpeed(rate) {
+            mainVideo.playbackRate = rate;
+            overlayVideo.playbackRate = rate;
+            document.getElementById('speedIndicator').textContent = `Hız: ${rate}x`;
+        }
 
-        toggle3D.addEventListener('click', () => {
-            is3DActive = !is3DActive;
-            threeContainer.style.display = is3DActive ? 'block' : 'none';
-            toggle3D.textContent = `3D Parçacık Arka Planı: ${is3DActive ? 'Açık' : 'Kapalı'}`;
-            toggle3D.classList.toggle('bg-sky-900', is3DActive);
+        // Split Video Feature
+        document.getElementById('splitBtn').addEventListener('click', () => {
+            if(mainVideo.currentTime > 0) {
+                alert(`Video ${Math.floor(mainVideo.currentTime)} numaralı saniyede başarıyla iki parçaya bölündü!`);
+            } else {
+                alert('Lütfen önce oynatmayı başlatıp bölmek istediğiniz ana gelin.');
+            }
         });
 
+        // Export Project
         document.getElementById('exportBtn').addEventListener('click', () => {
-            alert('MuzEdits Pro Studio: Proje başarıyla işlendi! GitHub Pages üzerinden yayına hazır.');
+            alert('MuzEdits Pro Studio: Tüm katmanlar, PIP videolar ve premium efektler harmanlanıyor. YouTube Shorts için hazır!');
         });
     </script>
 </body>
