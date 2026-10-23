@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MuzEdits Studio - Web Editor</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <style>
+        @keyframes pulse-watermark {
+            0%, 100% { opacity: 0.2; transform: scale(1); }
+            50% { opacity: 0.05; transform: scale(1.05); }
+        }
+        .muzedits-watermark {
+            animation: pulse-watermark 4s infinite ease-in-out;
+        }
+        /* Custom Scrollbar for Timeline */
+        ::-webkit-scrollbar { height: 6px; width: 6px; }
+        ::-webkit-scrollbar-track { background: #0f172a; }
+        ::-webkit-scrollbar-thumb { background: #334155; border-radius: 3px; }
+    </style>
+</head>
+<body class="bg-slate-950 text-slate-100 h-screen flex flex-col overflow-hidden select-none">
+
+    <!-- Top Navbar -->
+    <header class="h-14 bg-slate-900 border-b border-slate-800 flex items-center justify-between px-4 z-20">
+        <div class="flex items-center space-x-3">
+            <span class="text-sky-400 font-black text-lg tracking-wider">MUZEDITS</span>
+            <span class="text-xs bg-slate-800 text-slate-400 px-2 py-0.5 rounded-full border border-slate-700">Pro Studio 3D</span>
+        </div>
+        <div class="flex items-center space-x-2">
+            <button id="exportBtn" class="bg-sky-600 hover:bg-sky-500 text-white text-xs font-semibold px-4 py-2 rounded-lg transition shadow-lg shadow-sky-900/40">Dışa Aktar / Kaydet</button>
+        </div>
+    </header>
+
+    <!-- Main Workspace -->
+    <div class="flex-1 flex overflow-hidden">
+        
+        <!-- Left Sidebar: Tools / Media -->
+        <aside class="w-64 bg-slate-900/80 border-r border-slate-800 flex flex-col">
+            <div class="p-3 border-b border-slate-800 text-xs font-bold text-slate-400 uppercase tracking-wider">Medya & Varlıklar</div>
+            <div class="p-4 space-y-4 flex-1 overflow-y-auto">
+                <div>
+                    <label class="block text-xs font-medium text-slate-300 mb-2">Video / Medya Yükle</label>
+                    <input type="file" id="mediaUpload" accept="video/*,audio/*" class="block w-full text-xs text-slate-400 file:mr-2 file:py-1.5 file:px-3 file:rounded-md file:border-0 file:text-xs file:font-semibold file:bg-sky-600 file:text-white hover:file:bg-sky-500 cursor-pointer">
+                </div>
+                
+                <hr class="border-slate-800">
+                
+                <div class="space-y-3">
+                    <span class="text-xs font-bold text-slate-400 uppercase tracking-wider">3D Efekt & Sahne</span>
+                    <button id="toggle3D" class="w-full py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs rounded-lg border border-slate-700 transition">3D Parçacık Arka Planı: Açık</button>
+                </div>
+
+                <div class="space-y-3">
+                    <span class="text-xs font-bold text-slate-400 uppercase tracking-wider">Filtreler & Ayarlar</span>
+                    <div>
+                        <label class="text-xs text-slate-400 flex justify-between"><span>Parlaklık</span><span id="valBrightness">100%</span></label>
+                        <input type="range" id="filterBrightness" min="50" max="150" value="100" class="w-full accent-sky-500 mt-1">
+                    </div>
+                    <div>
+                        <label class="text-xs text-slate-400 flex justify-between"><span>Kontrast</span><span id="valContrast">100%</span></label>
+                        <input type="range" id="filterContrast" min="50" max="150" value="100" class="w-full accent-sky-500 mt-1">
+                    </div>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Center Canvas / Preview Area -->
+        <main class="flex-1 bg-slate-950 flex flex-col items-center justify-center relative overflow-hidden p-6">
+            <!-- 3D Canvas Background Container -->
+            <div id="three-container" class="absolute inset-0 z-0 pointer-events-none"></div>
+
+            <!-- Video Preview Box (CapCut Style 9:16) -->
+            <div class="relative w-full max-w-[280px] aspect-[9/16] bg-black rounded-xl overflow-hidden shadow-2xl border border-slate-800 z-10 flex items-center justify-center">
+                <video id="previewVideo" class="w-full h-full object-cover" playsinline></video>
+                
+                <!-- MuzEdits Watermark Layer (%20 Opacity Pulsing) -->
+                <div id="watermarkLayer" class="absolute bottom-6 right-4 text-white font-black text-sm tracking-widest muzedits-watermark pointer-events-none drop-shadow-md">
+                    MuzEdits
+                </div>
+            </div>
+
+            <!-- Video Playback Controls -->
+            <div class="flex items-center space-x-4 mt-4 z-10 bg-slate-900/90 px-6 py-2 rounded-full border border-slate-800 backdrop-blur">
+                <button id="playPauseBtn" class="text-sky-400 hover:text-sky-300 font-bold text-sm">Oynat / Durdur</button>
+                <span id="timeDisplay" class="text-xs text-slate-400 font-mono">00:00 / 00:00</span>
+            </div>
+        </main>
+
+    </div>
+
+    <!-- Bottom Timeline (CapCut Style Tracks) -->
+    <footer class="h-36 bg-slate-900 border-t border-slate-800 flex flex-col z-20">
+        <div class="h-8 bg-slate-900/90 border-b border-slate-800 flex items-center px-4 text-xs text-slate-400 justify-between">
+            <span class="font-semibold text-slate-300">Zaman Çizelgesi (Timeline)</span>
+            <span class="text-[10px] text-slate-500">MuzEdits Motor v2.0</span>
+        </div>
+        <div class="flex-1 p-3 space-y-2 overflow-x-auto">
+            <!-- Video Track -->
+            <div class="flex items-center bg-slate-950/60 rounded-lg h-10 border border-slate-800 px-3 relative overflow-hidden">
+                <span class="text-[10px] font-bold text-sky-400 w-20 shrink-0">VİDEO</span>
+                <div id="videoTrackItem" class="h-7 bg-sky-900/50 border border-sky-700/60 rounded flex items-center px-2 text-[11px] text-sky-200 truncate w-48">Boş Medya</div>
+            </div>
+            <!-- Watermark / Text Track -->
+            <div class="flex items-center bg-slate-950/60 rounded-lg h-10 border border-slate-800 px-3 relative overflow-hidden">
+                <span class="text-[10px] font-bold text-purple-400 w-20 shrink-0">FİLİGRAN</span>
+                <div class="h-7 bg-purple-900/50 border border-purple-700/60 rounded flex items-center px-2 text-[11px] text-purple-200 w-full">MuzEdits (%20 Şeffaflık Döngüsü Aktif)</div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Three.js 3D Background Script -->
+    <script>
+        let scene, camera, renderer, particles;
+        let is3DActive = true;
+
+        function init3D() {
+            const container = document.getElementById('three-container');
+            scene = new THREE.Scene();
+            camera = new THREE.PerspectiveCamera(75, container.clientWidth / container.clientHeight, 0.1, 1000);
+            renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
+            renderer.setSize(container.clientWidth, container.clientHeight);
+            container.appendChild(renderer.domElement);
+
+            // Create floating 3D Particles
+            const geometry = new THREE.BufferGeometry();
+            const count = 300;
+            const positions = new Float32Array(count * 3);
+
+            for(let i = 0; i < count * 3; i++) {
+                positions[i] = (Math.random() - 0.5) * 10;
+            }
+
+            geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+            const material = new THREE.PointsMaterial({ color: 0x38bdf8, size: 0.03, transparent: true, opacity: 0.4 });
+            particles = new THREE.Points(geometry, material);
+            scene.add(particles);
+
+            camera.position.z = 3;
+
+            animate3D();
+        }
+
+        function animate3D() {
+            requestAnimationFrame(animate3D);
+            if (is3DActive && particles) {
+                particles.rotation.x += 0.001;
+                particles.rotation.y += 0.002;
+            }
+            renderer.render(scene, camera);
+        }
+
+        init3D();
+
+        // UI & Video Controls Logic
+        const mediaUpload = document.getElementById('mediaUpload');
+        const previewVideo = document.getElementById('previewVideo');
+        const playPauseBtn = document.getElementById('playPauseBtn');
+        const videoTrackItem = document.getElementById('videoTrackItem');
+        const filterBrightness = document.getElementById('filterBrightness');
+        const filterContrast = document.getElementById('filterContrast');
+        const toggle3D = document.getElementById('toggle3D');
+        const threeContainer = document.getElementById('three-container');
+
+        mediaUpload.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (file) {
+                const url = URL.createObjectURL(file);
+                previewVideo.src = url;
+                previewVideo.load();
+                videoTrackItem.textContent = file.name;
+            }
+        });
+
+        playPauseBtn.addEventListener('click', () => {
+            if (previewVideo.paused) {
+                previewVideo.play();
+            } else {
+                previewVideo.pause();
+            }
+        });
+
+        function updateFilters() {
+            previewVideo.style.filter = `brightness(${filterBrightness.value}%) contrast(${filterContrast.value}%)`;
+            document.getElementById('valBrightness').textContent = filterBrightness.value + '%';
+            document.getElementById('valContrast').textContent = filterContrast.value + '%';
+        }
+
+        filterBrightness.addEventListener('input', updateFilters);
+        filterContrast.addEventListener('input', updateFilters);
+
+        toggle3D.addEventListener('click', () => {
+            is3DActive = !is3DActive;
+            threeContainer.style.display = is3DActive ? 'block' : 'none';
+            toggle3D.textContent = `3D Parçacık Arka Planı: ${is3DActive ? 'Açık' : 'Kapalı'}`;
+            toggle3D.classList.toggle('bg-sky-900', is3DActive);
+        });
+
+        document.getElementById('exportBtn').addEventListener('click', () => {
+            alert('MuzEdits Pro Studio: Proje başarıyla işlendi! GitHub Pages üzerinden yayına hazır.');
+        });
+    </script>
+</body>
+</html>
