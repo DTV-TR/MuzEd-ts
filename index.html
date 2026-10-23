@@ -2,269 +2,120 @@
 <html lang="tr">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MuzEdits Pro Studio - Ultimate Editor</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>MuzEdits Komik Kamera</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @keyframes pulse-watermark {
             0%, 100% { opacity: 0.2; transform: scale(1); }
-            50% { opacity: 0.05; transform: scale(1.05); }
+            50% { opacity: 0.05; transform: scale(1.03); }
         }
         .muzedits-watermark {
             animation: pulse-watermark 4s infinite ease-in-out;
         }
-        /* Modern Effects */
-        .effect-glitch { filter: drop-shadow(2px -2px #ff0055) drop-shadow(-2px 2px #00ffff); }
-        .effect-vhs { filter: sepia(0.3) contrast(1.2) saturate(1.4); }
-        .effect-neon { filter: brightness(1.2) drop-shadow(0 0 8px #38bdf8); }
-        .effect-cyber { filter: hue-rotate(90deg) contrast(1.3); }
-        .effect-bw { filter: grayscale(100%) contrast(1.3); }
-
-        ::-webkit-scrollbar { height: 6px; width: 6px; }
-        ::-webkit-scrollbar-track { background: #090d16; }
-        ::-webkit-scrollbar-thumb { background: #1e293b; border-radius: 3px; }
+        /* Komik ve Yamultma Efektleri */
+        .fx-normal { filter: none; transform: scale(1); }
+        .fx-fisheye { filter: contrast(130%) saturate(140%); transform: perspective(300px) rotateX(10deg); }
+        .fx-wave { filter: hue-rotate(90deg) contrast(150%); }
+        .fx-whirl { filter: invert(15%) hue-rotate(180deg); }
+        .fx-stretch { transform: scaleX(1.3) scaleY(0.9); }
+        .fx-compress { transform: scaleX(0.8) scaleY(1.2); }
+        .fx-pixel { filter: contrast(200%) brightness(1.1); }
+        .fx-glitch { filter: drop-shadow(3px -3px #ff0055) drop-shadow(-3px 3px #00ffff); }
+        .fx-neon { filter: drop-shadow(0 0 10px #38bdf8) brightness(1.3); }
+        .fx-retro { filter: sepia(0.8) contrast(1.4) brightness(0.9); }
+        .fx-matrix { filter: hue-rotate(100deg) saturate(300%) contrast(1.5); }
+        .fx-horror { filter: brightness(0.6) contrast(1.8) grayscale(0.5); }
+        .fx-cyber { filter: hue-rotate(240deg) invert(10%) contrast(1.4); }
+        .fx-party { filter: hue-rotate(300deg) saturate(400%); }
+        .fx-alien { filter: hue-rotate(150deg) invert(20%) brightness(1.2); }
+        .fx-fuzzy { filter: blur(1px) contrast(150%); }
+        .fx-mirror { transform: scaleX(-1); }
+        .fx-mini { transform: scale(0.7); }
     </style>
 </head>
-<body class="bg-slate-950 text-slate-100 h-screen flex flex-col overflow-hidden select-none font-sans">
+<body class="bg-black text-white h-screen flex flex-col justify-between overflow-hidden select-none">
 
-    <!-- Top Navigation Bar -->
-    <header class="h-14 bg-slate-900 border-b border-slate-800 flex items-center justify-between px-4 z-20">
-        <div class="flex items-center space-x-3">
-            <span class="text-sky-400 font-black text-lg tracking-wider">MUZEDITS</span>
-            <span class="text-[10px] bg-gradient-to-r from-sky-500 to-indigo-500 text-white px-2 py-0.5 rounded-full font-bold shadow">PRO ULTRA</span>
-        </div>
-        <div class="flex items-center space-x-2">
-            <button id="exportBtn" class="bg-gradient-to-r from-sky-600 to-indigo-600 hover:opacity-90 text-white text-xs font-bold px-4 py-2 rounded-xl transition shadow-lg shadow-sky-900/40">Projeyi Dışa Aktar</button>
-        </div>
+    <!-- Üst Başlık ve Kamera Değiştir -->
+    <header class="flex items-center justify-between p-4 bg-gradient-to-b from-black/80 to-transparent z-20">
+        <span class="text-sky-400 font-black text-base tracking-wider">MUZEDITS <span class="text-[10px] text-white font-normal bg-sky-600 px-2 py-0.5 rounded-full">Komik Kamera</span></span>
+        <button id="switchCam" class="bg-white/10 hover:bg-white/25 px-3 py-1.5 rounded-full text-xs font-semibold backdrop-blur border border-white/10">Kamerayı Çevir</button>
     </header>
 
-    <!-- Main Studio Workspace -->
-    <div class="flex-1 flex overflow-hidden">
+    <!-- Kamera Önizleme Alanı (Tam Telefon Ekranı Uyumlu) -->
+    <main class="relative flex-1 flex items-center justify-center overflow-hidden my-auto">
+        <video id="cameraStream" autoplay playsinline muted class="absolute inset-0 w-full h-full object-cover fx-normal transition-all duration-300"></video>
         
-        <!-- Left Tool Panel (Tabs) -->
-        <aside class="w-72 bg-slate-900/90 border-r border-slate-800 flex flex-col z-10">
-            <!-- Tool Tabs -->
-            <div class="grid grid-cols-4 bg-slate-950 text-center text-[10px] font-bold text-slate-400 border-b border-slate-800">
-                <button onclick="switchTab('media')" id="tabBtn-media" class="py-3 text-sky-400 border-b-2 border-sky-400">Medya</button>
-                <button onclick="switchTab('overlay')" id="tabBtn-overlay" class="py-3 hover:text-slate-200">Bindir</button>
-                <button onclick="switchTab('effects')" id="tabBtn-effects" class="py-3 hover:text-slate-200">Efekt</button>
-                <button onclick="switchTab('tools')" id="tabBtn-tools" class="py-3 hover:text-slate-200">Hız/Böl</button>
-            </div>
-
-            <!-- Tab Contents -->
-            <div class="p-4 flex-1 overflow-y-auto space-y-5">
-                
-                <!-- 1. Medya Sekmesi -->
-                <div id="tab-media" class="space-y-4">
-                    <div>
-                        <label class="block text-xs font-bold text-slate-300 mb-2">Ana Video Yükle</label>
-                        <input type="file" id="mainVideoUpload" accept="video/*" class="block w-full text-xs text-slate-400 file:mr-2 file:py-2 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-sky-600 file:text-white hover:file:bg-sky-500 cursor-pointer">
-                    </div>
-                </div>
-
-                <!-- 2. Bindirme (PIP - Resim/Video Ekle) Sekmesi -->
-                <div id="tab-overlay" class="space-y-4 hidden">
-                    <div>
-                        <label class="block text-xs font-bold text-slate-300 mb-2">Üste Resim Ekle</label>
-                        <input type="file" id="overlayImageUpload" accept="image/*" class="block w-full text-xs text-slate-400 file:mr-2 file:py-2 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-purple-600 file:text-white hover:file:bg-purple-500 cursor-pointer">
-                    </div>
-                    <div>
-                        <label class="block text-xs font-bold text-slate-300 mb-2">Üste Video Ekle (PIP)</label>
-                        <input type="file" id="overlayVideoUpload" accept="video/*" class="block w-full text-xs text-slate-400 file:mr-2 file:py-2 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-purple-600 file:text-white hover:file:bg-purple-500 cursor-pointer">
-                    </div>
-                </div>
-
-                <!-- 3. Efektler Sekmesi (Envayi Çeşit Premium Efekt) -->
-                <div id="tab-effects" class="space-y-3 hidden">
-                    <span class="text-xs font-bold text-slate-400 uppercase tracking-wider block">Premium Efektler</span>
-                    <div class="grid grid-cols-2 gap-2">
-                        <button onclick="applyEffect('none')" class="p-2 bg-slate-800 hover:bg-slate-700 text-xs rounded-lg border border-slate-700 text-center">Normal</button>
-                        <button onclick="applyEffect('glitch')" class="p-2 bg-pink-950/60 hover:bg-pink-900/60 text-pink-300 text-xs rounded-lg border border-pink-800 text-center font-semibold">Cyber Glitch</button>
-                        <button onclick="applyEffect('vhs')" class="p-2 bg-amber-950/60 hover:bg-amber-900/60 text-amber-300 text-xs rounded-lg border border-amber-800 text-center font-semibold">Retro VHS</button>
-                        <button onclick="applyEffect('neon')" class="p-2 bg-sky-950/60 hover:bg-sky-900/60 text-sky-300 text-xs rounded-lg border border-sky-800 text-center font-semibold">Neon Glow</button>
-                        <button onclick="applyEffect('cyber')" class="p-2 bg-indigo-950/60 hover:bg-indigo-900/60 text-indigo-300 text-xs rounded-lg border border-indigo-800 text-center font-semibold">Matrix Cyber</button>
-                        <button onclick="applyEffect('bw')" class="p-2 bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs rounded-lg border border-slate-700 text-center font-semibold">Sinematik B&W</button>
-                    </div>
-                </div>
-
-                <!-- 4. Hız ve Bölme Sekmesi -->
-                <div id="tab-tools" class="space-y-4 hidden">
-                    <div>
-                        <span class="text-xs font-bold text-slate-400 uppercase tracking-wider block mb-2">Oynatma Hızı</span>
-                        <div class="grid grid-cols-4 gap-1">
-                            <button onclick="setSpeed(0.5)" class="py-2 bg-slate-800 hover:bg-slate-700 text-xs rounded border border-slate-700">0.5x</button>
-                            <button onclick="setSpeed(1)" class="py-2 bg-sky-600 text-xs rounded font-bold">1x</button>
-                            <button onclick="setSpeed(2)" class="py-2 bg-slate-800 hover:bg-slate-700 text-xs rounded border border-slate-700">2x</button>
-                            <button onclick="setSpeed(4)" class="py-2 bg-slate-800 hover:bg-slate-700 text-xs rounded border border-slate-700">4x</button>
-                        </div>
-                    </div>
-                    <div class="pt-2">
-                        <span class="text-xs font-bold text-slate-400 uppercase tracking-wider block mb-2">Kurgu Araçları</span>
-                        <button id="splitBtn" class="w-full py-2.5 bg-rose-600/80 hover:bg-rose-600 text-white text-xs font-bold rounded-xl shadow transition">Videoyu An Anda Böl (Split)</button>
-                    </div>
-                </div>
-
-            </div>
-        </aside>
-
-        <!-- Center Preview Area (CapCut Player Style) -->
-        <main class="flex-1 bg-slate-950 flex flex-col items-center justify-center relative overflow-hidden p-6">
-            
-            <!-- Video Preview Screen (9:16 Shorts Format) -->
-            <div id="previewContainer" class="relative w-full max-w-[270px] aspect-[9/16] bg-black rounded-2xl overflow-hidden shadow-2xl border border-slate-800 z-10 flex items-center justify-center">
-                <!-- Main Video Element -->
-                <video id="mainVideo" class="w-full h-full object-cover" playsinline></video>
-                
-                <!-- Overlay Image / PIP Layer -->
-                <img id="overlayImage" class="absolute top-10 left-6 w-24 rounded-lg shadow-lg border border-white/20 hidden cursor-move" alt="PIP Image">
-                
-                <!-- Overlay Video PIP Layer -->
-                <video id="overlayVideo" class="absolute bottom-12 left-6 w-28 rounded-lg shadow-lg border border-white/20 hidden" playsinline muted autoplay loop></video>
-
-                <!-- MuzEdits Watermark Layer (%20 Opacity Pulsing) -->
-                <div class="absolute bottom-4 right-4 text-white font-black text-xs tracking-widest muzedits-watermark pointer-events-none drop-shadow-md">
-                    MuzEdits
-                </div>
-            </div>
-
-            <!-- Playback Controls -->
-            <div class="flex items-center space-x-4 mt-4 z-10 bg-slate-900/90 px-6 py-2.5 rounded-full border border-slate-800 backdrop-blur shadow-xl">
-                <button id="playPauseBtn" class="text-sky-400 hover:text-sky-300 font-bold text-xs uppercase tracking-wider">Oynat / Durdur</button>
-                <span id="timeDisplay" class="text-xs text-slate-400 font-mono">00:00 / 00:00</span>
-            </div>
-        </main>
-
-    </div>
-
-    <!-- Bottom Timeline (Multi-track CapCut UI) -->
-    <footer class="h-40 bg-slate-900 border-t border-slate-800 flex flex-col z-20">
-        <div class="h-8 bg-slate-900/90 border-b border-slate-800 flex items-center px-4 text-xs text-slate-400 justify-between">
-            <span class="font-bold text-slate-300 flex items-center gap-2">Zaman Çizelgesi Katmanları</span>
-            <span id="speedIndicator" class="text-[10px] bg-sky-950 text-sky-300 px-2 py-0.5 rounded border border-sky-800">Hız: 1.0x</span>
+        <!-- %20 Şeffaf Yanıp Sönen MuzEdits Filigranı -->
+        <div class="absolute bottom-6 right-6 text-white font-black text-sm tracking-widest muzedits-watermark pointer-events-none drop-shadow-lg z-10">
+            MuzEdits
         </div>
-        <div class="flex-1 p-3 space-y-2 overflow-x-auto">
-            <!-- Track 1: Main Video -->
-            <div class="flex items-center bg-slate-950/70 rounded-lg h-9 border border-slate-800 px-3 relative">
-                <span class="text-[10px] font-bold text-sky-400 w-24 shrink-0">VİDEO 1</span>
-                <div id="trackMainInfo" class="h-6 bg-sky-900/40 border border-sky-700/50 rounded flex items-center px-2 text-[11px] text-sky-200 truncate w-64">Boş Medya</div>
-            </div>
-            <!-- Track 2: Overlay PIP -->
-            <div class="flex items-center bg-slate-950/70 rounded-lg h-9 border border-slate-800 px-3 relative">
-                <span class="text-[10px] font-bold text-purple-400 w-24 shrink-0">BİNDİRME (PIP)</span>
-                <div id="trackOverlayInfo" class="h-6 bg-purple-900/40 border border-purple-700/50 rounded flex items-center px-2 text-[11px] text-purple-200 truncate w-64">Eklenmedi</div>
-            </div>
-            <!-- Track 3: Watermark -->
-            <div class="flex items-center bg-slate-950/70 rounded-lg h-9 border border-slate-800 px-3 relative">
-                <span class="text-[10px] font-bold text-emerald-400 w-24 shrink-0">FİLİGRAN</span>
-                <div class="h-6 bg-emerald-900/40 border border-emerald-700/50 rounded flex items-center px-2 text-[11px] text-emerald-200 w-full">MuzEdits %20 Pulse Efekti Aktif</div>
-            </div>
+    </main>
+
+    <!-- Alt Efekt Seçim Paneli (15-20 Komik Efekt Kaydırmalı Kutu) -->
+    <footer class="bg-slate-950/90 border-t border-slate-800/80 p-3 z-20 backdrop-blur-md">
+        <div class="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2 flex justify-between items-center">
+            <span>Komik & Yamultma Efektleri (18 Adet)</span>
+            <span class="text-sky-400">Seç ve Eğlen</span>
+        </div>
+        <!-- Yatay Kaydırılabilir Efekt Butonları -->
+        <div class="flex space-x-2 overflow-x-auto pb-2 scrollbar-none" id="effectList">
+            <button onclick="setEffect('normal', this)" class="shrink-0 px-3 py-2 bg-sky-600 text-white text-xs font-bold rounded-xl border border-sky-500">Normal</button>
+            <button onclick="setEffect('fisheye', this)" class="shrink-0 px-3 py-2 bg-slate-900 hover:bg-slate-800 text-slate-200 text-xs rounded-xl border border-slate-800">Balık Gözü</button>
+            <button onclick="setEffect('wave', this)" class="shrink-0 px-3 py-2 bg-slate-900 hover:bg-slate-800 text-slate-200 text-xs rounded-xl border border-slate-800">Çılgın Dalga</button>
+            <button onclick="setEffect('whirl', this)" class="shrink-0 px-3 py-2 bg-slate-900 hover:bg-slate-800 text-slate-200 text-xs rounded-xl border border-slate-800">Girdap</button>
+            <button onclick="setEffect('stretch', this)" class="shrink-0 px-3 py-2 bg-slate-900 hover:bg-slate-800 text-slate-200 text-xs rounded-xl border border-slate-800">Kafa Esnet</button>
+            <button onclick="setEffect('compress', this)" class="shrink-0 px-3 py-2 bg-slate-900 hover:bg-slate-800 text-slate-200 text-xs rounded-xl border border-slate-800">Sıkıştır</button>
+            <button onclick="setEffect('pixel', this)" class="shrink-0 px-3 py-2 bg-slate-900 hover:bg-slate-800 text-slate-200 text-xs rounded-xl border border-slate-800">Piksel Patlaması</button>
+            <button onclick="setEffect('glitch', this)" class="shrink-0 px-3 py-2 bg-slate-900 hover:bg-slate-800 text-slate-200 text-xs rounded-xl border border-slate-800">Cyber Glitch</button>
+            <button onclick="setEffect('neon', this)" class="shrink-0 px-3 py-2 bg-slate-900 hover:bg-slate-800 text-slate-200 text-xs rounded-xl border border-slate-800">Neon Parlama</button>
+            <button onclick="setEffect('retro', this)" class="shrink-0 px-3 py-2 bg-slate-900 hover:bg-slate-800 text-slate-200 text-xs rounded-xl border border-slate-800">Retro VHS</button>
+            <button onclick="setEffect('matrix', this)" class="shrink-0 px-3 py-2 bg-slate-900 hover:bg-slate-800 text-slate-200 text-xs rounded-xl border border-slate-800">Matrix Yeşil</button>
+            <button onclick="setEffect('horror', this)" class="shrink-0 px-3 py-2 bg-slate-900 hover:bg-slate-800 text-slate-200 text-xs rounded-xl border border-slate-800">Karanlık Mod</button>
+            <button onclick="setEffect('cyber', this)" class="shrink-0 px-3 py-2 bg-slate-900 hover:bg-slate-800 text-slate-200 text-xs rounded-xl border border-slate-800">Cyberpunk</button>
+            <button onclick="setEffect('party', this)" class="shrink-0 px-3 py-2 bg-slate-900 hover:bg-slate-800 text-slate-200 text-xs rounded-xl border border-slate-800">Parti Modu</button>
+            <button onclick="setEffect('alien', this)" class="shrink-0 px-3 py-2 bg-slate-900 hover:bg-slate-800 text-slate-200 text-xs rounded-xl border border-slate-800">Uzaylı Surat</button>
+            <button onclick="setEffect('fuzzy', this)`" class="shrink-0 px-3 py-2 bg-slate-900 hover:bg-slate-800 text-slate-200 text-xs rounded-xl border border-slate-800">Buğulu Cam</button>
+            <button onclick="setEffect('mirror', this)" class="shrink-0 px-3 py-2 bg-slate-900 hover:bg-slate-800 text-slate-200 text-xs rounded-xl border border-slate-800">Ayna Efekti</button>
+            <button onclick="setEffect('mini', this)" class="shrink-0 px-3 py-2 bg-slate-900 hover:bg-slate-800 text-slate-200 text-xs rounded-xl border border-slate-800">Mini Kafa</button>
         </div>
     </footer>
 
-    <!-- JavaScript Application Logic -->
+    <!-- Kamera ve Efekt Kontrol Kodları -->
     <script>
-        // Tab Management
-        function switchTab(tabName) {
-            ['media', 'overlay', 'effects', 'tools'].forEach(t => {
-                document.getElementById(`tab-${t}`).classList.add('hidden');
-                document.getElementById(`tabBtn-${t}`).classList.remove('text-sky-400', 'border-b-2', 'border-sky-400');
-                document.getElementById(`tabBtn-${t}`).classList.add('hover:text-slate-200');
+        const video = document.getElementById('cameraStream');
+        let currentFacingMode = 'user'; // Ön kamera başlangıç
+
+        async function startCamera() {
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({
+                    video: { facingMode: currentFacingMode, width: { ideal: 720 }, height: { ideal: 1280 } },
+                    audio: false
+                });
+                video.srcObject = stream;
+            } catch (err) {
+                alert("Kamera izni alınamadı veya kamera bulunamadı: " + err);
+            }
+        }
+
+        document.getElementById('switchCam').addEventListener('click', () => {
+            currentFacingMode = currentFacingMode === 'user' ? 'environment' : 'user';
+            startCamera();
+        });
+
+        function setEffect(effectName, btn) {
+            // Sınıfları sıfırla
+            video.className = `absolute inset-0 w-full h-full object-cover fx-${effectName} transition-all duration-300`;
+            
+            // Buton aktiflik renkleri
+            document.querySelectorAll('#effectList button').forEach(b => {
+                b.className = "shrink-0 px-3 py-2 bg-slate-900 hover:bg-slate-800 text-slate-200 text-xs rounded-xl border border-slate-800";
             });
-            document.getElementById(`tab-${tabName}`).classList.remove('hidden');
-            document.getElementById(`tabBtn-${tabName}`).classList.add('text-sky-400', 'border-b-2', 'border-sky-400');
-            document.getElementById(`tabBtn-${tabName}`).classList.remove('hover:text-slate-200');
+            btn.className = "shrink-0 px-3 py-2 bg-sky-600 text-white text-xs font-bold rounded-xl border border-sky-500 shadow-lg shadow-sky-900/50";
         }
 
-        const mainVideo = document.getElementById('mainVideo');
-        const overlayImage = document.getElementById('overlayImage');
-        const overlayVideo = document.getElementById('overlayVideo');
-        const playPauseBtn = document.getElementById('playPauseBtn');
-        const timeDisplay = document.getElementById('timeDisplay');
-        const trackMainInfo = document.getElementById('trackMainInfo');
-        const trackOverlayInfo = document.getElementById('trackOverlayInfo');
-        const speedIndicator = z = document.getElementById('speedIndicator');
-
-        // Main Video Upload
-        document.getElementById('mainVideoUpload').addEventListener('change', (e) => {
-            const file = e.target.files[0];
-            if (file) {
-                mainVideo.src = URL.createObjectURL(file);
-                mainVideo.load();
-                trackMainInfo.textContent = file.name;
-            }
-        });
-
-        // Overlay Image Upload
-        document.getElementById('overlayImageUpload').addEventListener('change', (e) => {
-            const file = e.target.files[0];
-            if (file) {
-                overlayImage.src = URL.createObjectURL(file);
-                overlayImage.classList.remove('hidden');
-                overlayVideo.classList.add('hidden');
-                trackOverlayInfo.textContent = "Resim PIP: " + file.name;
-            }
-        });
-
-        // Overlay Video Upload
-        document.getElementById('overlayVideoUpload').addEventListener('change', (e) => {
-            const file = e.target.files[0];
-            if (file) {
-                overlayVideo.src = URL.createObjectURL(file);
-                overlayVideo.classList.remove('hidden');
-                overlayImage.classList.add('hidden');
-                overlayVideo.play();
-                trackOverlayInfo.textContent = "Video PIP: " + file.name;
-            }
-        });
-
-        // Play / Pause
-        playPauseBtn.addEventListener('click', () => {
-            if (mainVideo.paused) {
-                mainVideo.play();
-                if(!overlayVideo.paused) overlayVideo.play();
-            } else {
-                mainVideo.pause();
-                overlayVideo.pause();
-            }
-        });
-
-        // Time Update
-        mainVideo.addEventListener('timeupdate', () => {
-            const curM = Math.floor(mainVideo.currentTime / 60).toString().padStart(2, '0');
-            const curS = Math.floor(mainVideo.currentTime % 60).toString().padStart(2, '0');
-            const durM = Math.floor(mainVideo.duration / 60 || 0).toString().padStart(2, '0');
-            const durS = Math.floor(mainVideo.duration % 60 || 0).toString().padStart(2, '0');
-            timeDisplay.textContent = `${curM}:${curS} / ${durM}:${durS}`;
-        });
-
-        // Apply Premium Effects
-        function applyEffect(effectName) {
-            mainVideo.className = "w-full h-full object-cover";
-            if (effectName !== 'none') {
-                mainVideo.classList.add(`effect-${effectName}`);
-            }
-        }
-
-        // Speed Control
-        function setSpeed(rate) {
-            mainVideo.playbackRate = rate;
-            overlayVideo.playbackRate = rate;
-            document.getElementById('speedIndicator').textContent = `Hız: ${rate}x`;
-        }
-
-        // Split Video Feature
-        document.getElementById('splitBtn').addEventListener('click', () => {
-            if(mainVideo.currentTime > 0) {
-                alert(`Video ${Math.floor(mainVideo.currentTime)} numaralı saniyede başarıyla iki parçaya bölündü!`);
-            } else {
-                alert('Lütfen önce oynatmayı başlatıp bölmek istediğiniz ana gelin.');
-            }
-        });
-
-        // Export Project
-        document.getElementById('exportBtn').addEventListener('click', () => {
-            alert('MuzEdits Pro Studio: Tüm katmanlar, PIP videolar ve premium efektler harmanlanıyor. YouTube Shorts için hazır!');
-        });
+        // Sayfa açıldığında kamerayı başlat
+        startCamera();
     </script>
 </body>
 </html>
